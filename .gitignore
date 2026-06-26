@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+*.tsbuildinfo
+cdk.out/
+
+# Local repo mirrors / worktrees (never commit checked-out target repos)
+projects/*/repo/
+!projects/*/repo/.gitkeep
+.cache/
+/tmp/
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+.idea/
+*.swp
+
+# Test / coverage
+coverage/
+.vitest/

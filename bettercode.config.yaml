@@ -1,0 +1,69 @@
+version: 1
+
+slack:
+  signingSecretEnv: SLACK_SIGNING_SECRET
+  botTokenSecretName: bettercode/slack/bot-token
+  responseMode: thread
+  postInterimMessage: true
+  ignoreBotMessages: true
+  ignoreEditsAndDeletes: true
+
+llm:
+  provider: openai
+  apiKeySecretName: bettercode/llm/openai-api-key
+  models:
+    router:  { id: gpt-4-turbo, maxTokens: 4096 }
+    explore: { id: gpt-4-turbo, maxTokens: 4096 }
+    synth:   { id: gpt-4-turbo, maxTokens: 4096 }
+  fallbacks:
+    synth:   [gpt-4o]
+    explore: [gpt-4o]
+    router:  [gpt-4o]
+
+budgets:
+  maxToolCalls: 200             # ProductLens is the primary actor; give it lots of tools
+  maxSubagentCalls: 3           # Minimal delegation; ProductLens explores directly
+  maxWallClockMs: 120000        # 120s for thorough investigation (matches API timeout)
+  maxTokens: 300000             # Very high token budget for quality reasoning
+  maxSearchResults: 100          # More search results for comprehensive coverage
+  maxFileBytes: 262144          # 256 KiB per read
+  maxFileLines: 1200            # More lines per file
+  maxSlackChars: 4000           # Reasonable Slack message limit
+
+access:
+  denyGlobs:
+    - '**/.env'
+    - '**/.env.*'
+    - '**/*.pem'
+    - '**/*.key'
+    - '**/id_rsa*'
+    - '**/secrets/**'
+  allowGlobs:
+    - '**/*'
+  maxBinaryBytesProbe: 8192
+
+rateLimits:
+  perChannelPerMinute: 6
+  perUserPerMinute: 3
+  perChannelConcurrentJobs: 2
+
+projects:
+  engage-workspace:
+    repoUrl: https://github.com/Betterworks/engage-workspace.git
+    branch: main
+    agentDir: projects/engage-workspace/.github/agents
+    defaultAgent: ProductLens
+    githubWebBaseUrl: https://github.com/Betterworks/engage-workspace
+    submodules: false
+    subagents:
+      ProductLens: [explore]
+
+channels:
+  # Update this with your actual Slack channel ID
+  C0B55UR745B:
+    project: engage-workspace
+    agent: ProductLens
+    mode: auto
+    triggers:
+      appMention: true
+      questionLikeMessages: false
