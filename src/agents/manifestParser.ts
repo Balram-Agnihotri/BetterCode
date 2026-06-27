@@ -6,6 +6,7 @@ const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 /** Aliases accepted in manifests, normalized to canonical tool names. */
 const TOOL_ALIASES: Record<string, ToolName> = {
+  // Core tools
   read: 'read',
   read_file: 'read',
   search: 'search',
@@ -13,6 +14,29 @@ const TOOL_ALIASES: Record<string, ToolName> = {
   agent: 'agent',
   subagent: 'agent',
   task: 'agent',
+  // Symbol tools
+  findSymbol: 'findSymbol',
+  find_symbol: 'findSymbol',
+  workspaceSymbols: 'workspaceSymbols',
+  workspace_symbols: 'workspaceSymbols',
+  goToDefinition: 'goToDefinition',
+  go_to_definition: 'goToDefinition',
+  findReferences: 'findReferences',
+  find_references: 'findReferences',
+  callHierarchy: 'callHierarchy',
+  call_hierarchy: 'callHierarchy',
+  documentSymbols: 'documentSymbols',
+  document_symbols: 'documentSymbols',
+  // Graph tools
+  dependencyGraph: 'dependencyGraph',
+  dependency_graph: 'dependencyGraph',
+  // Workspace tools
+  recordFinding: 'recordFinding',
+  record_finding: 'recordFinding',
+  getWorkspaceSummary: 'getWorkspaceSummary',
+  get_workspace_summary: 'getWorkspaceSummary',
+  updateHypothesis: 'updateHypothesis',
+  update_hypothesis: 'updateHypothesis',
 };
 
 export class ManifestError extends Error {

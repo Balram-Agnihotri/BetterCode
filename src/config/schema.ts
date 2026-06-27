@@ -31,6 +31,15 @@ const budgetsSchema = z
   })
   .strict();
 
+const indexSchema = z
+  .object({
+    enabledLanguages: z.array(z.string()).optional(),
+    maxFileSizeKb: z.number().int().positive().default(512),
+    chunkSizeLines: z.number().int().positive().default(150),
+  })
+  .strict()
+  .default({});
+
 const slackSchema = z
   .object({
     signingSecretEnv: z.string().min(1),
@@ -101,6 +110,7 @@ export const configSchema = z
     llm: llmSchema,
     budgets: budgetsSchema,
     access: accessSchema,
+    index: indexSchema,
     rateLimits: rateLimitsSchema.default({}),
     projects: z.record(z.string(), projectSchema),
     channels: z.record(z.string(), channelSchema),

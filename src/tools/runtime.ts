@@ -4,12 +4,35 @@ import { agentTool } from './agentTool';
 import { readTool } from './readTool';
 import { redact } from './redaction';
 import { searchTool } from './searchTool';
+import {
+  findSymbolTool,
+  workspaceSymbolsTool,
+  goToDefinitionTool,
+  findReferencesTool,
+  callHierarchyTool,
+  documentSymbolsTool,
+} from './symbolTools';
+import { dependencyGraphTool } from './graphTools';
+import { recordFindingTool, getWorkspaceSummaryTool, updateHypothesisTool } from './workspaceTools';
 import { toolError, type ToolContext, type ToolDefinition, type ToolResult } from './types';
 
 const TOOLS: Record<ToolName, ToolDefinition> = {
   read: readTool as ToolDefinition,
   search: searchTool as ToolDefinition,
   agent: agentTool as ToolDefinition,
+  // Symbol-aware tools
+  findSymbol: findSymbolTool as ToolDefinition,
+  workspaceSymbols: workspaceSymbolsTool as ToolDefinition,
+  goToDefinition: goToDefinitionTool as ToolDefinition,
+  findReferences: findReferencesTool as ToolDefinition,
+  callHierarchy: callHierarchyTool as ToolDefinition,
+  documentSymbols: documentSymbolsTool as ToolDefinition,
+  // Graph tools
+  dependencyGraph: dependencyGraphTool as ToolDefinition,
+  // Workspace tools
+  recordFinding: recordFindingTool as ToolDefinition,
+  getWorkspaceSummary: getWorkspaceSummaryTool as ToolDefinition,
+  updateHypothesis: updateHypothesisTool as ToolDefinition,
 };
 
 const AUDIT_TTL_DAYS = 90;

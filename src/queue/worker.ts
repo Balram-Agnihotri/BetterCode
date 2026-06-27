@@ -12,6 +12,7 @@ import { getSecret, materializeSshKey } from '../data/secrets';
 import { AnthropicClient } from '../llm/anthropic';
 import { OpenAIClient } from '../llm/openai';
 import { createLogger } from '../observability/logger';
+import { RepoKnowledgeBase } from '../index/repoKnowledgeBase';
 import { runJob } from '../orchestrator/orchestrator';
 import { SimpleRepoManager } from '../repo/repoManager';
 import { SlackResponder } from '../slack/responder';
@@ -77,6 +78,8 @@ async function processRecord(record: SQSRecord): Promise<boolean> {
     const snapshot = await repo.getSnapshot(job.project, project, { sshKeyPath });
     await updateJob(job.jobId, { commitSha: snapshot.commitSha });
 
+    const knowledgeBase = await RepoKnowledgeBase.buildOrLoad(snapshot, resolveAccess(cfg, project));
+
     const apiKey = await getSecret(cfg.llm.apiKeySecretName);
     const llm = cfg.llm.provider === 'openai' ? new OpenAIClient(apiKey) : new AnthropicClient(apiKey);
     const answer = await runJob({
@@ -91,6 +94,7 @@ async function processRecord(record: SQSRecord): Promise<boolean> {
       llm,
       logger,
       recordAudit: recordToolCall,
+      knowledgeBase,
     });
 
     await responder.postFinal(job, answer);

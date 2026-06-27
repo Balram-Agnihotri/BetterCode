@@ -1,8 +1,10 @@
 import type { z } from 'zod';
 import type { AgentRegistry } from '../agents/agentLoader';
 import type { AccessConfig } from '../config/schema';
+import type { RepoKnowledgeBase } from '../index/repoKnowledgeBase';
 import type { BudgetTracker } from '../orchestrator/budgets';
 import type { Logger } from '../observability/logger';
+import type { InvestigationWorkspace } from '../workspace/investigationWorkspace';
 import type {
   Budgets,
   Citation,
@@ -51,6 +53,16 @@ export interface ToolContext {
   spawnSubagent: SpawnSubagentFn;
   /** Aborted when the job exceeds its wall-clock budget. */
   signal: AbortSignal;
+  /**
+   * Repository symbol/graph/BM25 index — built once per commit and reused.
+   * Optional: absent when the index has not been built (jobs still work via rg).
+   */
+  knowledgeBase?: RepoKnowledgeBase;
+  /**
+   * Per-job investigation workspace — accumulates findings, file summaries,
+   * and hypothesis for context-efficient investigation.
+   */
+  workspace?: InvestigationWorkspace;
 }
 
 export interface ToolResult {

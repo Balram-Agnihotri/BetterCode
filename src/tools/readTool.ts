@@ -90,5 +90,8 @@ export const readTool: ToolDefinition<ReadInput> = {
       meta: { path: relPath, startLine: start, endLine: end, totalLines: total },
       truncated: truncatedByLines || clampedBytes,
     });
+
+    // Note: workspace.recordFileRead() is called by the orchestrator after this
+    // result is returned so the content is available for summary generation.
   },
 };

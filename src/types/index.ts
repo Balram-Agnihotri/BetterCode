@@ -11,9 +11,39 @@
 // ---------------------------------------------------------------------------
 
 /** The fixed set of tool names the LLM may be granted. */
-export type ToolName = 'read' | 'search' | 'agent';
+export type ToolName =
+  | 'read'
+  | 'search'
+  | 'agent'
+  // Symbol-aware tools (Phase 1)
+  | 'findSymbol'
+  | 'workspaceSymbols'
+  | 'goToDefinition'
+  | 'findReferences'
+  | 'callHierarchy'
+  | 'documentSymbols'
+  // Graph tools (Phase 1)
+  | 'dependencyGraph'
+  // Workspace tools (Phase 3)
+  | 'recordFinding'
+  | 'getWorkspaceSummary'
+  | 'updateHypothesis';
 
-export const ALL_TOOL_NAMES: readonly ToolName[] = ['read', 'search', 'agent'];
+export const ALL_TOOL_NAMES: readonly ToolName[] = [
+  'read',
+  'search',
+  'agent',
+  'findSymbol',
+  'workspaceSymbols',
+  'goToDefinition',
+  'findReferences',
+  'callHierarchy',
+  'documentSymbols',
+  'dependencyGraph',
+  'recordFinding',
+  'getWorkspaceSummary',
+  'updateHypothesis',
+];
 
 /** Parsed `.github/agents/<name>.md` manifest. */
 export interface AgentManifest {

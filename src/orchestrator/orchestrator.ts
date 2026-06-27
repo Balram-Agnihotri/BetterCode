@@ -14,6 +14,9 @@ import type {
   RepoSnapshot,
   ToolCallAudit,
 } from '../types';
+import type { RepoKnowledgeBase } from '../index/repoKnowledgeBase';
+import { InvestigationWorkspace } from '../workspace/investigationWorkspace';
+import { injectWorkspaceSummary, shouldInjectWorkspace } from '../workspace/workspaceSummarizer';
 import { BudgetTracker } from './budgets';
 import { estimateCostUsd, resolveModel, type ResolvedModel } from './modelRouter';
 import {
@@ -47,8 +50,9 @@ const SYNTHESIZE_NUDGE_TURN = 7;
 /**
  * Max consecutive search calls (without a read in between) before we inject a
  * "you should read now" hint. Prevents search-only spirals.
+ * Reduced from 2 → 3 since hybrid search already surfaces symbol info.
  */
-const MAX_CONSECUTIVE_SEARCHES = 2;
+const MAX_CONSECUTIVE_SEARCHES = 3;
 
 export interface RunJobParams {
   jobId: string;
@@ -62,6 +66,8 @@ export interface RunJobParams {
   llm: LlmClient;
   logger: Logger;
   recordAudit: (audit: ToolCallAudit) => Promise<void>;
+  /** Pre-built repository index (symbol index + BM25). Optional — jobs still work without it. */
+  knowledgeBase?: RepoKnowledgeBase;
 }
 
 interface AgentRunResult {
@@ -147,6 +153,9 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
   const nextSeq = () => (seq += 1);
   const allCitations: Citation[] = [];
 
+  // Per-job investigation workspace (fresh for each question)
+  const workspace = new InvestigationWorkspace();
+
   const spawnSubagent: SpawnSubagentFn = async ({ agentName, task, thoroughness, depth }) => {
     const manifest = p.registry.get(agentName);
     const res = await runAgent(manifest, wrapSubagentTask(task, thoroughness), depth, false);
@@ -174,6 +183,8 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
     nextSeq,
     spawnSubagent,
     signal: abort.signal,
+    knowledgeBase: p.knowledgeBase,
+    workspace,
   });
 
   async function runAgent(
@@ -182,7 +193,7 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
     depth: number,
     isTopLevel: boolean,
   ): Promise<AgentRunResult> {
-    const system = buildSystemPrompt(manifest, p.snapshot, isTopLevel, p.budgets);
+    const baseSystem = buildSystemPrompt(manifest, p.snapshot, isTopLevel, p.budgets);
     const tools = buildToolSpecsForAgent(manifest);
     const model = resolveModel(p.cfg, manifest.model ?? (isTopLevel ? 'synth' : 'explore'));
     const messages: LlmMessage[] = [{ role: 'user', content: [{ type: 'text', text: taskText }] }];
@@ -204,13 +215,20 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
         break;
       }
 
-      // --- Synthesis nudge: if we've been exploring for a while, prompt convergence
-      if (turn === SYNTHESIZE_NUDGE_TURN && state.hasReadAtLeastOnce) {
+      // --- Workspace-based synthesis nudge (replaces rigid turn counter) ---
+      // Inject nudge if workspace says we're ready, or as fallback at turn 7
+      const workspaceReady = isTopLevel && workspace.isReadyToSynthesize();
+      if (workspaceReady || (turn === SYNTHESIZE_NUDGE_TURN && state.hasReadAtLeastOnce)) {
         messages.push({
           role: 'user',
           content: [{ type: 'text', text: SYNTHESIZE_INSTRUCTION }],
         });
       }
+
+      // --- Inject workspace summary at each turn after the first read ---
+      const system = isTopLevel && shouldInjectWorkspace(workspace, turn)
+        ? injectWorkspaceSummary(baseSystem, workspace)
+        : baseSystem;
 
       const resp = await p.llm.complete({
         model: model.id,
@@ -260,6 +278,20 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
       const resultBlocks: LlmContent[] = results.map(({ tu, r }) => {
         localCitations.push(...r.citations);
         allCitations.push(...r.citations);
+
+        // Auto-record file reads into the workspace so later turns get the summary
+        if (tu.name === 'read' && r.ok && isTopLevel) {
+          const readInput = tu.input as { path?: string; startLine?: number; endLine?: number };
+          if (readInput.path) {
+            workspace.recordFileRead(
+              readInput.path,
+              r.content,
+              readInput.startLine ?? 1,
+              readInput.endLine,
+            );
+          }
+        }
+
         return {
           type: 'tool_result',
           toolUseId: tu.id,
