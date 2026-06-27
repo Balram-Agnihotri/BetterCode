@@ -37,8 +37,8 @@ describe('InvestigationWorkspace', () => {
 
     const summary = ws.getSummary();
     expect(summary.findings).toHaveLength(2);
-    expect(summary.findings[0].text).toBe('runJob is async');
-    expect(summary.findings[0].confidence).toBe('high');
+    expect(summary.findings[0]!.text).toBe('runJob is async');
+    expect(summary.findings[0]!.confidence).toBe('high');
   });
 
   it('updates hypothesis', () => {

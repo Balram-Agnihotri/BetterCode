@@ -99,7 +99,7 @@ export class RepoKnowledgeBase {
     } catch (err) {
       // Log the full error so we can diagnose
       const msg = err instanceof Error ? err.message : String(err);
-      const stack = err instanceof Error ? err.stack : '';
+      const stack = err instanceof Error ? (err.stack ?? '') : '';
       console.error('[RepoKnowledgeBase] Build failed:', msg);
       console.error('[RepoKnowledgeBase] Stack:', stack.split('\n').slice(0, 5).join('\n'));
       // Return empty instance so the job can still proceed with plain ripgrep
@@ -125,7 +125,7 @@ export class RepoKnowledgeBase {
       snapshot.worktreeRoot,
     );
 
-    const bm25 = Bm25Index.build(fileChunks);
+    const bm25 = Bm25Index.build(fileChunks.map(fc => ({ path: fc.relPath, content: fc.content })));
 
     const kb = new RepoKnowledgeBase(symbols, allSymbols, graph, bm25, snapshot.commitSha);
 

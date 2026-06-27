@@ -55,6 +55,7 @@ export function reciprocalRankFusion(
   for (const list of lists) {
     for (let rank = 0; rank < list.length; rank++) {
       const item = list[rank];
+      if (!item) continue;
       const baseScore = 1 / (RRF_K + rank + 1);
       const boost = item.kind === 'symbol-exact' ? SYMBOL_EXACT_BOOST : 1.0;
       const contribution = baseScore * boost;
@@ -67,7 +68,7 @@ export function reciprocalRankFusion(
     }
   }
 
-  const entries = [...scores.entries()].sort((a, b) => b[1] - a[1]);
+  const entries = [...scores.entries()].sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0));
 
   return entries.slice(0, maxResults).map(([id, rrfScore]) => {
     const m = meta.get(id)!;

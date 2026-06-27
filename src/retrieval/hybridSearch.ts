@@ -117,7 +117,7 @@ export async function hybridSearch(
       results: rgList.slice(0, cap).map((r) => ({
         path: r.path,
         startLine: r.startLine,
-        endLine: r.endLine,
+        endLine: r.endLine || r.startLine,
         confidence: 'medium',
         sources: ['rg'],
         snippet: snippets.get(r.id) ?? '',

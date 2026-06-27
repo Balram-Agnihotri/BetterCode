@@ -133,9 +133,9 @@ const KINDS: Record<string, Record<string, SymbolKind>> = {
   },
 };
 // TSX shares TypeScript grammar rules
-KINDS.tsx = KINDS.typescript;
+if (KINDS.typescript) KINDS.tsx = KINDS.typescript;
 // JSX shares JavaScript grammar rules
-KINDS.jsx = KINDS.javascript;
+if (KINDS.javascript) KINDS.jsx = KINDS.javascript;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -299,8 +299,7 @@ export function extractFromSource(
         const importedNames = extractImportedNames(node);
         const isStar = node.text.includes('* as') || node.text.includes('import *');
         const isDefault =
-          (node.childForFieldName('import_clause')?.namedChildren[0]?.type === 'identifier') ??
-          false;
+          (node.childForFieldName('import_clause')?.namedChildren[0]?.type) === 'identifier';
         imports.push({ fromFile: relPath, rawSpecifier: specifier, importedNames, isStar, isDefault });
       }
       // Don't recurse into import children — they're not symbols

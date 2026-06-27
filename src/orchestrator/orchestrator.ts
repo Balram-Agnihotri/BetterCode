@@ -198,6 +198,7 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
     const model = resolveModel(p.cfg, manifest.model ?? (isTopLevel ? 'synth' : 'explore'));
     const messages: LlmMessage[] = [{ role: 'user', content: [{ type: 'text', text: taskText }] }];
     const localCitations: Citation[] = [];
+    let system = baseSystem;
 
     const state: TurnState = {
       phase: 'planning',
@@ -226,7 +227,7 @@ export async function runJob(p: RunJobParams): Promise<AnswerResult> {
       }
 
       // --- Inject workspace summary at each turn after the first read ---
-      const system = isTopLevel && shouldInjectWorkspace(workspace, turn)
+      system = isTopLevel && shouldInjectWorkspace(workspace, turn)
         ? injectWorkspaceSummary(baseSystem, workspace)
         : baseSystem;
 

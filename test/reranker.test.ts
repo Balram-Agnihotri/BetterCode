@@ -13,7 +13,7 @@ describe('reciprocalRankFusion', () => {
     const listB: RankedInput[] = [item('A'), item('C')];
 
     const results = reciprocalRankFusion([listA, listB]);
-    expect(results[0].id).toBe('A');
+    expect(results[0]!.id).toBe('A');
     expect(results.map((r) => r.id)).toContain('B');
     expect(results.map((r) => r.id)).toContain('C');
   });
@@ -39,14 +39,14 @@ describe('reciprocalRankFusion', () => {
 
     const results = reciprocalRankFusion([rgList, bm25List]);
     const x = results.find((r) => r.id === 'X')!;
-    expect(x.confidence).toBe('high');
-    expect(x.sources).toContain('rg');
-    expect(x.sources).toContain('bm25');
+    expect(x!.confidence).toBe('high');
+    expect(x!.sources).toContain('rg');
+    expect(x!.sources).toContain('bm25');
   });
 
   it('marks a symbol-exact result as high-confidence even from one source', () => {
     const results = reciprocalRankFusion([[item('S', 'symbol-exact')]]);
-    expect(results[0].confidence).toBe('high');
+    expect(results[0]!.confidence).toBe('high');
   });
 
   it('respects maxResults cap', () => {
@@ -66,8 +66,8 @@ describe('reciprocalRankFusion', () => {
       signature: 'export async function runJob(',
     };
     const results = reciprocalRankFusion([[withMeta]]);
-    expect(results[0].symbolName).toBe('runJob');
-    expect(results[0].signature).toContain('runJob');
+    expect(results[0]!.symbolName).toBe('runJob');
+    expect(results[0]!.signature).toContain('runJob');
   });
 
   it('returns empty array for empty input', () => {
