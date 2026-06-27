@@ -54,9 +54,21 @@ function pkgDir(pkgName: string): string {
 function ensureInit(): Promise<void> {
   if (!_initPromise) {
     _initPromise = (async () => {
-      const wasmPath = join(pkgDir('web-tree-sitter'), 'tree-sitter.wasm');
-      const wasmBinary = await readFile(wasmPath);
-      await (Parser as unknown as { init(opts: unknown): Promise<void> }).init({ wasmBinary });
+      // Use a timeout to prevent hanging if WASM initialization is stuck
+      const initTimeout = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('WASM init timeout (5s)')), 5000),
+      );
+      try {
+        const wasmPath = join(pkgDir('web-tree-sitter'), 'tree-sitter.wasm');
+        const wasmBinary = await readFile(wasmPath);
+        await Promise.race([
+          (Parser as unknown as { init(opts: unknown): Promise<void> }).init({ wasmBinary }),
+          initTimeout,
+        ]);
+      } catch (err) {
+        // If init fails, cache the error so all subsequent calls fail fast
+        throw new Error(`WASM initialization failed: ${(err as Error).message}`);
+      }
     })();
   }
   return _initPromise;

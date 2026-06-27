@@ -80,19 +80,30 @@ export class RepoKnowledgeBase {
       const raw = await readFile(cachePath, 'utf8');
       const data = JSON.parse(raw) as SerializedKB;
       if (data.version === SCHEMA_VERSION && data.commitSha === snapshot.commitSha) {
+        console.log('[RepoKnowledgeBase] Cache hit, loaded from', cachePath);
         return RepoKnowledgeBase.fromSerialized(data, snapshot.worktreeRoot);
       }
-    } catch {
+    } catch (err) {
       /* cache miss or schema mismatch — proceed to build */
+      console.log('[RepoKnowledgeBase] Cache miss, will build fresh');
     }
 
     // Build fresh
     try {
+      console.log('[RepoKnowledgeBase] Starting build for', snapshot.project, 'commit', snapshot.commitSha);
+      const t0 = Date.now();
       const kb = await RepoKnowledgeBase.build(snapshot, access, cacheRoot, cachePath);
+      const elapsed = Date.now() - t0;
+      console.log('[RepoKnowledgeBase] Build succeeded in', elapsed, 'ms');
       return kb;
     } catch (err) {
+      // Log the full error so we can diagnose
+      const msg = err instanceof Error ? err.message : String(err);
+      const stack = err instanceof Error ? err.stack : '';
+      console.error('[RepoKnowledgeBase] Build failed:', msg);
+      console.error('[RepoKnowledgeBase] Stack:', stack.split('\n').slice(0, 5).join('\n'));
       // Return empty instance so the job can still proceed with plain ripgrep
-      console.error('[RepoKnowledgeBase] build failed, falling back to empty index:', (err as Error).message);
+      console.error('[RepoKnowledgeBase] Falling back to empty index (symbol tools will be unavailable)');
       return RepoKnowledgeBase.empty(snapshot.commitSha);
     }
   }
